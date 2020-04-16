@@ -1,0 +1,17 @@
+[package]
+name = "audisp_ids"
+version = "0.1.0"
+authors = ["0xd34b33f <0xd34b33f@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nom = "5.1.1"
+ctrlc = { version = "3.0", features = ["termination"] }
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "syscall_parse"
+harness = false
