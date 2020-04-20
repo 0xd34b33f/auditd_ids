@@ -17,11 +17,11 @@ pub struct AuditRecord {
     pub exe_path: String,
     pub audit_id: u64,
 }
-
+#[inline]
 fn filter_audit_record(i: &str) -> IResult<&str, &str> {
     tag("type=SYSCALL")(i)
 }
-
+#[inline]
 fn get_timestamp(i: &str) -> IResult<&str, &str> {
     let unneded = match take_until("(")(i) {
         Ok((unparsed, _)) => unparsed,
@@ -29,7 +29,7 @@ fn get_timestamp(i: &str) -> IResult<&str, &str> {
     };
     take_until(".")(unneded)
 }
-
+#[inline]
 fn get_audit_id(i: &str) -> IResult<&str, &str> {
     let unused = match take_until(":")(i) {
         Ok((unparsed, _)) => unparsed,
@@ -38,24 +38,24 @@ fn get_audit_id(i: &str) -> IResult<&str, &str> {
 
     take_until(")")(unused)
 }
-
+#[inline]
 fn get_syscall_number(i: &str) -> IResult<&str, &str> {
     let (unparsed, _) = take_until("syscall=")(i)?;
     let (unparsed, _) = take_while(|x: char| !is_digit(x as u8))(unparsed)?;
     tag("59")(unparsed)
 }
-
+#[inline]
 fn get_after_equals(i: &str) -> IResult<&str, &str> {
     let (unparsed, _) = take_until("=")(i)?;
     let (unparsed, _) = take(1usize)(unparsed)?;
     take_while(|x: char| !is_space(x as u8))(unparsed)
 }
-
+#[inline]
 fn get_ppid(i: &str) -> IResult<&str, &str> {
     let (unparsed, _) = take_until("ppid")(i)?;
     get_after_equals(unparsed)
 }
-
+#[inline]
 fn get_u32_after_equlas<'a>(data: &'a str) -> Option<(&'a str, u32)> {
     let (unparsed, id) = match get_after_equals(data) {
         Ok((unparsed, uid)) => {
@@ -76,65 +76,31 @@ fn get_u32_after_equlas<'a>(data: &'a str) -> Option<(&'a str, u32)> {
     Some((unparsed, id))
 }
 
-fn valid_name<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
-where
-    T: InputTakeAtPosition,
-    <T as InputTakeAtPosition>::Item: AsChar,
-{
-    input.split_at_position1_complete(
-        |item| {
-            let character = item.as_char();
-            !(!character.is_alphanumeric() && !character.is_ascii_punctuation() && character == '"')
-        },
-        ErrorKind::AlphaNumeric,
-    )
-}
-
-fn parse_char<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, char, E> {
-    preceded(
-        char('\\'),
-        // `alt` tries each each parser in sequence, returning the result of
-        // the first successful match
-        alt((
-            // The `value` parser returns a fixed value (the first argument) if its
-            // parser (the second argument) succeeds. In these cases, it looks for
-            // the marker characters (n, r, t, etc) and returns the matching
-            // character (\n, \r, \t, etc).
-            value('\n', char('n')),
-            value('\r', char('r')),
-            value('\t', char('t')),
-            value('\u{08}', char('b')),
-            value('\u{0C}', char('f')),
-            value('\\', char('\\')),
-            value('/', char('/')),
-            value('"', char('"')),
-        )),
-    )(i)
-}
-
+#[inline]
 fn parse_str(input: &str) -> IResult<&str, &str> {
     take_until("\"")(input)
 }
-
+#[inline]
 fn get_string_in_quotes(i: &str) -> IResult<&str, &str> {
     delimited(char('"'), parse_str, char('"'))(i)
 }
-
+#[inline]
 fn get_comm(i: &str) -> IResult<&str, &str> {
     let (unparsed, _) = take_until("comm=")(i)?;
     let (unparsed, data) = get_after_equals(unparsed)?;
-    return match get_string_in_quotes(data) {
+    match get_string_in_quotes(data) {
         Ok(a) => IResult::Ok((unparsed, a.1)),
         Err(e) => IResult::Err(e),
-    };
+    }
 }
 
+#[inline]
 fn get_exe(i: &str) -> IResult<&str, &str> {
     let (unparsed, data) = get_after_equals(i)?;
-    return match get_string_in_quotes(data) {
+    match get_string_in_quotes(data) {
         Ok(a) => IResult::Ok((unparsed, a.1)),
         Err(e) => IResult::Err(e),
-    };
+    }
 }
 
 #[inline]
