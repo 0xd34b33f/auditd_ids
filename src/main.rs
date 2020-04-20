@@ -1,11 +1,37 @@
-use parser::parse_record;
-use std::io;
-use std::io::{stdin, BufRead, BufReader, Read};
-mod parser;
-fn main() {
-	let stdin = io::stdin();
-	let reader = BufReader::new(stdin);
-	let data = r##"type=SYSCALL msg=audit(1579395661.252:1103007): arch=c000003e syscall=59 success=yes exit=0 a0=7f79fb7fd3cd a1=7ffe55183980 a2=7f79fba00388 a3=2 items=2 ppid=10649 pid=10650 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="unix_chkpwd" exe="/usr/sbin/unix_chkpwd" subj=system_u:system_r:chkpwd_t:s0-s0:c0.c1023 key="rootcmd""##;
-	parse_record(data);
-}
+use audisp_ids::analyzer::ThreatType::SuspectProcessInheritance;
+use audisp_ids::analyzer::*;
+use audisp_ids::parser::parse_record;
+use std::io::{BufRead, Error};
+use std::io::{BufReader, Read};
+use std::{io, process};
 
+fn main() -> Result<(), Error> {
+    SHELLS_SET.iter().for_each(|a| println!("{}", a));
+    let _term = unsafe { signal_hook::register(signal_hook::SIGTERM, || process::exit(0)) }?;
+    let _hup = unsafe { signal_hook::register(signal_hook::SIGHUP, || process::exit(0)) }?;
+    let stdin = io::stdin();
+    let reader = BufReader::new(stdin);
+    let mut tree = Tree::new();
+
+    reader
+        .lines()
+        .filter_map(|line| line.ok())
+        .map(|line| parse_record(&line))
+        .filter_map(|rec| rec)
+        .map(|record| tree.insert_record(record))
+        .map(|suspect| match suspect {
+            ThreatType::FalsePositive => None,
+            ThreatType::SuspectProcessInheritance(a) => Some(a),
+        })
+        .filter_map(|check_candidate| check_candidate)
+        .for_each(|threat| println!("{:#?}", threat));
+
+    // for line in reader.lines() {
+    //     let rec = match parse_record(&line.unwrap()) {
+    //         Some(a) => a,
+    //         None => continue,
+    //     };
+    //     tree.insert_record(rec);
+    // }
+    Ok(())
+}

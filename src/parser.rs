@@ -8,11 +8,14 @@ use nom::error::{ErrorKind, ParseError};
 use nom::multi::{count, many_till};
 use nom::sequence::{delimited, delimitedc, preceded};
 use nom::{AsChar, IResult, InputTakeAtPosition};
-
+#[derive(Debug, Clone)]
 pub struct AuditRecord {
-    pid: u32,
-    ppid: u32,
-    exe_path: String,
+    pub pid: u32,
+    pub ppid: u32,
+    pub uid: u32,
+    pub auid: u32,
+    pub exe_path: String,
+    pub audit_id: u64,
 }
 
 fn filter_audit_record(i: &str) -> IResult<&str, &str> {
@@ -47,10 +50,12 @@ fn get_after_equals(i: &str) -> IResult<&str, &str> {
     let (unparsed, _) = take(1usize)(unparsed)?;
     take_while(|x: char| !is_space(x as u8))(unparsed)
 }
+
 fn get_ppid(i: &str) -> IResult<&str, &str> {
     let (unparsed, _) = take_until("ppid")(i)?;
     get_after_equals(unparsed)
 }
+
 fn get_u32_after_equlas<'a>(data: &'a str) -> Option<(&'a str, u32)> {
     let (unparsed, id) = match get_after_equals(data) {
         Ok((unparsed, uid)) => {
@@ -106,6 +111,7 @@ fn parse_char<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, char, 
         )),
     )(i)
 }
+
 fn parse_str(input: &str) -> IResult<&str, &str> {
     take_until("\"")(input)
 }
@@ -130,6 +136,7 @@ fn get_exe(i: &str) -> IResult<&str, &str> {
         Err(e) => IResult::Err(e),
     };
 }
+
 #[inline]
 pub fn parse_record(record: &str) -> Option<AuditRecord> {
     let unparsed: &str = match filter_audit_record(record) {
@@ -225,5 +232,8 @@ pub fn parse_record(record: &str) -> Option<AuditRecord> {
         pid: pid,
         ppid: ppid,
         exe_path: exe.to_string(),
+        auid: auid,
+        audit_id: audit_id,
+        uid: uid,
     })
 }
