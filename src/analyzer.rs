@@ -37,7 +37,7 @@ fn get_installed_shells() -> std::io::Result<HashSet<String>> {
     Ok(reader
         .lines()
         .filter_map(|line| line.ok())
-        .filter(|line| !line.starts_with("#"))
+        .filter(|line| !line.starts_with('#'))
         .filter(|line| !line.is_empty())
         .map(|line| line.trim().to_string())
         .collect())
@@ -62,6 +62,7 @@ impl Tree {
             add_info: HashMap::new(),
         }
     }
+    fn (c)
     fn check_command(&self, record: &AuditRecord) -> ThreatType {
         let grand_parent = match self.pid_map.get(&record.ppid) {
             Some(a) => a,

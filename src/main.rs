@@ -1,8 +1,7 @@
-use audisp_ids::analyzer::ThreatType::SuspectProcessInheritance;
 use audisp_ids::analyzer::*;
 use audisp_ids::parser::parse_record;
+use std::io::BufReader;
 use std::io::{BufRead, Error};
-use std::io::{BufReader, Read};
 use std::{io, process};
 
 fn main() -> Result<(), Error> {
@@ -25,13 +24,5 @@ fn main() -> Result<(), Error> {
         })
         .filter_map(|check_candidate| check_candidate)
         .for_each(|threat| println!("{:#?}", threat));
-
-    // for line in reader.lines() {
-    //     let rec = match parse_record(&line.unwrap()) {
-    //         Some(a) => a,
-    //         None => continue,
-    //     };
-    //     tree.insert_record(rec);
-    // }
     Ok(())
 }

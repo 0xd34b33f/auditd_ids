@@ -1,13 +1,8 @@
-use nom;
-use nom::branch::alt;
-use nom::bytes::complete::{escaped, escaped_transform, is_not, tag, take, take_until, take_while};
-use nom::character::complete::{alpha1, alphanumeric1, anychar, char, one_of};
-use nom::character::{is_alphanumeric, is_digit, is_space};
-use nom::combinator::{map, value};
-use nom::error::{ErrorKind, ParseError};
-use nom::multi::{count, many_till};
-use nom::sequence::{delimited, delimitedc, preceded};
-use nom::{AsChar, IResult, InputTakeAtPosition};
+use nom::bytes::complete::{tag, take, take_until, take_while};
+use nom::character::complete::char;
+use nom::character::{is_digit, is_space};
+use nom::sequence::delimited;
+use nom::IResult;
 #[derive(Debug, Clone)]
 pub struct AuditRecord {
     pub pid: u32,
